@@ -19,10 +19,13 @@ class Parachuter(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.center = start_pos
 		self.speed = 2
+		self.reached_bottom = False
 		
 		
 	def tick(self):
 		self.rect = self.rect.move(0,self.speed)
+		if self.rect.center[1] >= 447:
+			self.reached_bottom = True
 
 class GameSpace:
 	def main(self):
@@ -44,6 +47,7 @@ class GameSpace:
 				self.clock.tick(60)
 
 				# 5) user inputs
+				self.clean_parachuters()
 				for event in pygame.event.get():
 					if event.type == QUIT:
 						sys.exit()
@@ -59,6 +63,10 @@ class GameSpace:
 				for parachuter in self.parachuters:
 					self.screen.blit(parachuter.image,parachuter.rect)
 				pygame.display.flip()
+
+	def clean_parachuters(self):
+		self.parachuters = [value for value in self.parachuters if value.reached_bottom == False]
+
 
 if __name__ == '__main__':
 	gs = GameSpace()
