@@ -18,7 +18,7 @@ class Parachuter(pygame.sprite.Sprite):
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
 		self.rect = self.image.get_rect()
 		self.rect.center = start_pos
-		self.speed = 2
+		self.speed = 6
 		self.reached_bottom = False
 		
 		
@@ -52,7 +52,8 @@ class GameSpace:
 					if event.type == QUIT:
 						sys.exit()
 					if event.type == MOUSEBUTTONDOWN:
-						self.parachuters.append(Parachuter(pygame.mouse.get_pos(),self))
+						x = pygame.mouse.get_pos()[0]
+						self.parachuters.append(Parachuter((x, -1),self))
 						
 				# 6) send a tick to every game object
 				for parachuter in self.parachuters:
