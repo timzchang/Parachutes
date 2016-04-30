@@ -9,7 +9,7 @@ import pygame
 from pygame.locals import *
 
 class Parachuter(pygame.sprite.Sprite):
-	def __init__(self,start_pos,gs=None):
+	def __init__(self,start_pos,speed,gs=None):
 		pygame.sprite.Sprite.__init__(self)
 		self.gs = gs
 		self.image = pygame.image.load("../media/parachute.gif")
@@ -18,12 +18,16 @@ class Parachuter(pygame.sprite.Sprite):
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
 		self.rect = self.image.get_rect()
 		self.rect.center = start_pos
-		self.speed = 2
+		self.dy = 1
 		self.reached_bottom = False
-		
+		self.counter = 0
+		self.speed = speed
 		
 	def tick(self):
-		self.rect = self.rect.move(0,self.speed)
+		self.counter += 1
+		if self.counter == self.speed:
+			self.counter = 0
+			self.rect = self.rect.move(0,self.dy)
 		if self.rect.center[1] >= 447:
 			self.reached_bottom = True
 
@@ -52,7 +56,7 @@ class GameSpace:
 					if event.type == QUIT:
 						sys.exit()
 					if event.type == MOUSEBUTTONDOWN:
-						self.parachuters.append(Parachuter(pygame.mouse.get_pos(),self))
+						self.parachuters.append(Parachuter(pygame.mouse.get_pos(),10,self))
 						
 				# 6) send a tick to every game object
 				for parachuter in self.parachuters:
