@@ -8,6 +8,20 @@ import sys
 import pygame
 from pygame.locals import *
 
+class Turret(pygame.sprite.Sprite):
+	def __init__(self,gs=None):
+		pygame.sprite.Sprite.__init__(self)
+		self.gs = gs
+		self.image = pygame.image.load("../media/turret_base.png")
+		scale = .15
+		w,h = self.image.get_size()
+		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
+		self.rect = self.image.get_rect()
+		self.rect.center = (300,430)
+
+	def tick(self):
+		pass
+
 class Parachuter(pygame.sprite.Sprite):
 	def __init__(self,start_pos,speed,gs=None):
 		pygame.sprite.Sprite.__init__(self)
@@ -45,6 +59,7 @@ class GameSpace:
 
 			# 2) set up game objects
 			self.parachuters = []
+			self.turret = Turret()
 			# 3) start game loop
 			while 1:
 				
@@ -61,11 +76,13 @@ class GameSpace:
 						self.parachuters.append(Parachuter((x, -4),5,self))
 						
 				# 6) send a tick to every game object
+				self.turret.tick()
 				for parachuter in self.parachuters:
 					parachuter.tick()
 
 				# 7) display the game objects
 				self.screen.blit(self.bg,(0,0))
+				self.screen.blit(self.turret.image,self.turret.rect)
 				for parachuter in self.parachuters:
 					self.screen.blit(parachuter.image,parachuter.rect)
 				pygame.display.flip()
