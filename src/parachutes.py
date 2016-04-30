@@ -8,6 +8,16 @@ import sys
 import pygame
 from pygame.locals import *
 
+class Parachuter(pygame.sprite.Sprite):
+	def __init__(slef,xpos,ypos,gs=None):
+		pygame.sprite.Sprite.__init__(self)
+		self.gs = gs
+		self.image = pygame.image.load("../media/parachute.gif")
+		self.rect = self.image.get_rect()
+		self.speed = 2
+		
+	def tick(self):
+		self.rect = self.rect.move(0,self.speed)
 
 class GameSpace:
 	def main(self):
