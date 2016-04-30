@@ -58,7 +58,7 @@ class GameSpace:
 						sys.exit()
 					if event.type == MOUSEBUTTONDOWN:
 						x = pygame.mouse.get_pos()[0]
-						self.parachuters.append(Parachuter((x, -1),self))
+						self.parachuters.append(Parachuter((x, -4),5,self))
 						
 				# 6) send a tick to every game object
 				for parachuter in self.parachuters:
