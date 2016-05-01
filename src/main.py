@@ -164,6 +164,7 @@ class GameSpace:
 			self.size = self.wifth, self.height = 640, 480
 			self.black = 0,0,0
 			self.screen = pygame.display.set_mode(self.size)
+			pygame.display.set_caption('Parachutes')
 
 			self.clock = pygame.time.Clock()
 			pygame.key.set_repeat(50,100)

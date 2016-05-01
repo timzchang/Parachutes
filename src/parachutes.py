@@ -55,10 +55,11 @@ class Parachuter(pygame.sprite.Sprite):
 		scale = .5
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
 		self.rect = self.image.get_rect()
-		self.para_rect = pygame.rect.Rect((self.rect.left+1,self.rect.top-4),(60,20))
-		self.body_rect = pygame.rect.Rect((self.rect.left+16,self.rect.top-36),(17,25))
-		#self.rect = self.rect.inflate(-10,-10)
+		self.para_rect = pygame.rect.Rect((0,0),(64,20))
+		self.body_rect = pygame.rect.Rect((0,0),(17,25))
 		self.rect.center = start_pos
+		self.para_rect.center = (self.rect.center[0], self.rect.center[1] - 16)
+		self.body_rect.midbottom = (self.rect.midbottom[0] - 7, self.rect.midbottom[1])
 		self.speed = 6
 		self.dy = 1
 		self.reached_bottom = False
@@ -131,7 +132,8 @@ class GameSpace:
 				self.screen.blit(self.bg,(0,0))
 				self.screen.blit(self.turret.image,self.turret.rect)
 				for parachuter in self.parachuters:
-					pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.left,parachuter.body_rect.top,parachuter.body_rect.width,parachuter.body_rect.height))
+				#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
+				#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
 					self.screen.blit(parachuter.image,parachuter.rect)
 				for bullet in self.bullets:
 					self.screen.blit(bullet.image,bullet.rect)
