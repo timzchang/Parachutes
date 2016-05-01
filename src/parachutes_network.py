@@ -7,6 +7,10 @@ import os
 import sys
 import pygame
 from pygame.locals import *
+from twisted.internet.protocol import ClientFactory
+from twisted.internet.protocol import Protocol
+from twisted.internet import reactor
+from twisted.internet.task import LoopingCall
 
 class Bullet(pygame.sprite.Sprite):
 	def __init__(self,theta,gs=None):
@@ -107,64 +111,60 @@ class Parachuter(pygame.sprite.Sprite):
 			self.hit = True
 
 class GameSpace:
-	def main(self):
+	def init(self):
 			# 1) basic initalization
 			pygame.init()
 			self.size = self.wifth, self.height = 640, 480
 			self.screen = pygame.display.set_mode(self.size)
-
+			pygame.display.set_caption("Parachutes")
 			self.bg = pygame.image.load("../media/background.png")
 			self.bg = pygame.transform.scale(self.bg, (640,480))
-			self.clock = pygame.time.Clock()
 
 			# 2) set up game objects
 			self.parachuters = []
 			self.bullets = []
 			self.gun = Gun(self)
 			self.turret = Turret(self)
-			# 3) start game loop
-			while 1:
-				
-				# 4) clock tick regulation (framerate)
-				self.clock.tick(60)
-				mx, my = pygame.mouse.get_pos()
-				O = my - self.turret.rect.center[1]
-				A = mx - self.turret.rect.center[0]
-				self.theta = math.atan2(-O,float(A))
-				if self.theta < 0 and self.theta > -math.pi/2:
-					self.theta = 0
-				elif self.theta < 0 and self.theta < -math.pi/2:
-					self.theta = math.pi
 
-				# 5) user inputs
-				self.clean_parachuters()
-				self.clean_bullets()
-				for event in pygame.event.get():
-					if event.type == QUIT:
-						sys.exit()
-					if event.type == MOUSEBUTTONDOWN:
-						self.parachuters.append(Parachuter((mx, 10),5,self))
-						self.bullets.append(Bullet(self.theta,self))
-						
-				# 6) send a tick to every game object
-				self.turret.tick()
-				self.gun.tick()
-				for parachuter in self.parachuters:
-					parachuter.tick()
-				for bullet in self.bullets:
-					bullet.tick()
+	def game_loop_iterate(self):
+			mx, my = pygame.mouse.get_pos()
+			O = my - self.turret.rect.center[1]
+			A = mx - self.turret.rect.center[0]
+			self.theta = math.atan2(-O,float(A))
+			if self.theta < 0 and self.theta > -math.pi/2:
+				self.theta = 0
+			elif self.theta < 0 and self.theta < -math.pi/2:
+				self.theta = math.pi
 
-				# 7) display the game objects
-				self.screen.blit(self.bg,(0,0))
-				for bullet in self.bullets:
-					self.screen.blit(bullet.image,bullet.rect)
-				self.screen.blit(self.gun.image, self.gun.rect)
-				self.screen.blit(self.turret.image,self.turret.rect)
-				for parachuter in self.parachuters:
-				#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
-				#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
-					self.screen.blit(parachuter.image,parachuter.rect)
-				pygame.display.flip()
+			# 5) user inputs
+			self.clean_parachuters()
+			self.clean_bullets()
+			for event in pygame.event.get():
+				if event.type == QUIT:
+					reactor.stop()
+				if event.type == MOUSEBUTTONDOWN:
+					self.parachuters.append(Parachuter((mx, 10),1,self))
+					self.bullets.append(Bullet(self.theta,self))
+					
+			# 6) send a tick to every game object
+			self.turret.tick()
+			self.gun.tick()
+			for parachuter in self.parachuters:
+				parachuter.tick()
+			for bullet in self.bullets:
+				bullet.tick()
+
+			# 7) display the game objects
+			self.screen.blit(self.bg,(0,0))
+			for bullet in self.bullets:
+				self.screen.blit(bullet.image,bullet.rect)
+			self.screen.blit(self.gun.image, self.gun.rect)
+			self.screen.blit(self.turret.image,self.turret.rect)
+			for parachuter in self.parachuters:
+			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
+			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
+				self.screen.blit(parachuter.image,parachuter.rect)
+			pygame.display.flip()
 
 	def clean_parachuters(self):
 		self.parachuters = [value for value in self.parachuters if value.reached_bottom == False]
@@ -176,4 +176,8 @@ class GameSpace:
 
 if __name__ == '__main__':
 	gs = GameSpace()
-	gs.main()
+	gs.init()
+	lc = LoopingCall(gs.game_loop_iterate)
+	lc.start(1/60)
+	reactor.run()
+	lc.stop()
