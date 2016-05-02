@@ -208,7 +208,7 @@ class GameSpace:
 			# win
 			self.win_image = pygame.image.load("../media/win.png")
 			w,h = self.win_image.get_size()
-			scale = .35
+			scale = .8
 			self.win_image = pygame.transform.scale(self.win_image, (int(w*scale), int(h*scale)))
 			self.win_rect = self.win_image.get_rect()
 			self.win_rect.center = (320,240)
@@ -216,7 +216,7 @@ class GameSpace:
 			# lose
 			self.lose_image = pygame.image.load("../media/lose.png")
 			w,h = self.lose_image.get_size()
-			scale = .35
+			scale = .8
 			self.lose_image = pygame.transform.scale(self.lose_image, (int(w*scale), int(h*scale)))
 			self.lose_rect = self.lose_image.get_rect()
 			self.lose_rect.center = (320,240)
@@ -228,6 +228,7 @@ class GameSpace:
 			self.turret = Turret(self)
 
 			self.trans_info = []
+			self.out_of_troops = False
 
 			# font for display
 			self.font = pygame.font.Font(None,36)
@@ -242,6 +243,10 @@ class GameSpace:
 				self.theta = 0
 			elif self.theta < 0 and self.theta < -math.pi/2:
 				self.theta = math.pi
+
+			if sum(self.troops) == 0 and self.out_of_troops == False:
+				self.out_of_troops = True
+				self.trans_info.append("no more troops")
 
 			# 5) user inputs
 			self.clean_parachuters()
@@ -327,6 +332,10 @@ class GameSpace:
 		self.bullets = [Bullet((bullet[0].x, bullet[0].y), bullet[1], self) for bullet in trans_info["bullets"]]
 		self.gun.rect = trans_info['gun'][0]
 		self.gun.theta_d = trans_info['gun'][1]
+		if trans_info['lost'] == 4:
+			self.conn_status = 3
+		if trans_info['lost'] == 3:
+			self.conn_status = 4
 
 	def clean_parachuters(self):
 		self.parachuters = [value for value in self.parachuters if value.reached_bottom == False]

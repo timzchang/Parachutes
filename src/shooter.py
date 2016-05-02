@@ -200,7 +200,7 @@ class GameSpace:
 			# win
 			self.win_image = pygame.image.load("../media/win.png")
 			w,h = self.win_image.get_size()
-			scale = .35
+			scale = .8
 			self.win_image = pygame.transform.scale(self.win_image, (int(w*scale), int(h*scale)))
 			self.win_rect = self.win_image.get_rect()
 			self.win_rect.center = (320,240)
@@ -208,7 +208,7 @@ class GameSpace:
 			# lose
 			self.lose_image = pygame.image.load("../media/lose.png")
 			w,h = self.lose_image.get_size()
-			scale = .35
+			scale = .8
 			self.lose_image = pygame.transform.scale(self.lose_image, (int(w*scale), int(h*scale)))
 			self.lose_rect = self.lose_image.get_rect()
 			self.lose_rect.center = (320,240)
@@ -227,6 +227,7 @@ class GameSpace:
 
 			self.trans_info = {"bullets": [], "parachutes": []}
 			self.client_events = []
+			self.dropper_out_of_troops = False
 
 			self.font = pygame.font.Font(None,36)
 
@@ -257,7 +258,10 @@ class GameSpace:
 			# 6) send a tick to every game object
 			if self.conn_status == 1:
 				for event in self.client_events:
-						self.parachuters.append(Parachuter(event,self))
+						if event == "no more troops":
+							self.dropper_out_of_troops = True
+						else:
+							self.parachuters.append(Parachuter(event,self))
 				del self.client_events[:]
 				self.turret.tick()
 				self.gun.tick()
@@ -270,6 +274,10 @@ class GameSpace:
 			self.trans_info['bullets'] = [(bullet.rect, bullet.theta) for bullet in self.bullets]
 			self.trans_info['parachuters'] = [(parachuter.rect.center,parachuter.speed,parachuter.color,parachuter.hitpoints,parachuter.sway,parachuter.sway_count,parachuter.sway_dir) for parachuter in self.parachuters]
 			self.trans_info['gun'] = (self.gun.rect, self.gun.theta_d)
+			self.trans_info['lost'] = self.conn_status
+
+			if self.dropper_out_of_troops and not self.parachuters:
+				self.conn_status = 3
 
 			# 7) display the game objects
 			self.screen.blit(self.bg,(0,0))
@@ -281,7 +289,10 @@ class GameSpace:
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
 				self.screen.blit(parachuter.image,parachuter.rect)
-			lives_string = "Lives: " + str(self.turret_lives)
+			if self.conn_status == 4:
+				lives_string = "Lives: 0"
+			else:
+				lives_string = "Lives: " + str(self.turret_lives)
 			text = self.font.render(lives_string,1,(255,255,255))
 			textpos = text.get_rect()
 			textpos.centerx = self.bg.get_rect().centerx
