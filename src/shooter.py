@@ -4,14 +4,14 @@ import math
 import os
 import sys
 import pygame
+import cPickle as pickle
+import zlib
 from pygame.locals import *
 from twisted.internet.protocol import ClientFactory
 from twisted.internet.protocol import Factory
-from twisted.internet.protocol import Protocol, ReconnectingClientFactory
+from twisted.internet.protocol import Protocol
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
-import cPickle as pickle
-import zlib
 
 class ParaConnection(Protocol):
 	def __init__(self, addr, gs):
@@ -19,7 +19,7 @@ class ParaConnection(Protocol):
 		self.gs = gs
 
 	def connectionMade(self):
-		# print "connection made"
+		# print "connection made to player 2"
 		self.lc = LoopingCall(self.gs_pickler)
 		self.lc.start(1/24)
 		self.gs.conn_status = 1
@@ -28,32 +28,26 @@ class ParaConnection(Protocol):
 		pv = pickle.dumps(self.gs.trans_info)
 		pv = zlib.compress(pv)
 		self.transport.write(pv)
-		del self.gs.trans_info[:]
 
 	def dataReceived(self, data):
 		pv = zlib.decompress(data)
 		pv = pickle.loads(pv)
-		self.gs.update(pv)
+		self.gs.client_events = pv
 
 	def connectionLost(self, reason):
-		# print "connection lost: ", reason
+		# print "connection lost to player 2, ", reason
 		self.gs.conn_status = 2
+		self.lc.stop()
 
-
-class ParaConnFactory(ReconnectingClientFactory):
+class ParaConnFactory(Factory):
 	def __init__(self, gs):
 		self.gs = gs
 
 	def buildProtocol(self, addr):
-		self.resetDelay()
 		return ParaConnection(addr, self.gs)
 
-	def clientConnectionFailed(self, connector, reason):
-		# print "retry connection"
-		ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
-
 class Bullet(pygame.sprite.Sprite):
-	def __init__(self, start_pos, theta,gs=None):
+	def __init__(self,theta,gs=None):
 		pygame.sprite.Sprite.__init__(self)
 		self.gs = gs
 		self.image = pygame.image.load("../media/bullet.png")
@@ -61,13 +55,11 @@ class Bullet(pygame.sprite.Sprite):
 		w,h = self.image.get_size()
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
 		self.rect = self.image.get_rect()
-		self.ypos =  start_pos[1]
-		self.xpos =  start_pos[0]
-		self.rect.center = (self.xpos,self.ypos)
+		self.rect.center = (300,430)
 		self.out_of_bounds = False
 		self.theta = theta
-		# self.xpos =  320 + 65 * math.cos(self.gs.theta)
-		# self.xpos =  320 + 65 * math.cos(self.gs.theta)
+		self.xpos =  320 + 65 * math.cos(self.gs.theta)
+		self.ypos =  435 - 65 * math.sin(self.gs.theta)
 		self.hit = False
 
 	def tick(self):
@@ -107,15 +99,18 @@ class Gun(pygame.sprite.Sprite):
 		self.theta_d = 0
 
 	def tick(self):
+		self.theta_d = math.degrees(self.gs.theta)
 		temp_center = self.rect.center
-		self.image = pygame.transform.rotate(self.orig_image,self.theta_d + 200)
+		self.image = pygame.transform.rotate(self.orig_image, self.theta_d + 200)
+		self.rect = self.image.get_rect()
+		self.rect.center = (320+self.radius*math.cos(self.gs.theta),435-self.radius*math.sin(self.gs.theta))
 
 class Parachuter(pygame.sprite.Sprite):
 	def __init__(self,parachuter_info,gs=None):
 		pygame.sprite.Sprite.__init__(self)
 		self.gs = gs
 		self.color = parachuter_info[2]
-		self.image = pygame.image.load("../media/" + self.color +"parachute.png")
+		self.image = pygame.image.load("../media/" + self.color + "parachute.png")
 		w,h = self.image.get_size()
 		scale = .5
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
@@ -125,7 +120,6 @@ class Parachuter(pygame.sprite.Sprite):
 		self.rect.center = parachuter_info[0]
 		self.para_rect.center = (self.rect.center[0], self.rect.center[1] - 16)
 		self.body_rect.midbottom = (self.rect.midbottom[0] - 7, self.rect.midbottom[1])
-		self.speed = 6
 		self.dy = 1
 		self.reached_bottom = False
 		self.hit = False
@@ -135,10 +129,11 @@ class Parachuter(pygame.sprite.Sprite):
 		self.sway = parachuter_info[4]
 		self.sway_count = parachuter_info[5]
 		self.sway_dir = parachuter_info[6]
-		
+
 	def tick(self):
 		self.counter += 1
 		if self.counter == self.speed:
+			self.counter = 0
 			if self.sway:
 				if self.sway_dir == "left":
 					self.sway_count += 1
@@ -185,7 +180,6 @@ class GameSpace:
 			pygame.display.set_caption("Parachutes")
 			self.bg = pygame.image.load("../media/background.png")
 			self.bg = pygame.transform.scale(self.bg, (640,480))
-			self.conn_status = 0
 
 			# dc image
 			self.dc_image = pygame.image.load("../media/dc.png")
@@ -194,16 +188,36 @@ class GameSpace:
 			self.dc_image = pygame.transform.scale(self.dc_image, (int(w*scale), int(h*scale)))
 			self.dc_rect = self.dc_image.get_rect()
 			self.dc_rect.center = (320,240)
-			self.mode = 0
-			self.troops = [10,10,10,10,10]
-
+			
 			# wait image
-			self.wait_image = pygame.image.load("../media/wait_p1.png")
+			self.wait_image = pygame.image.load("../media/wait_p2.png")
 			w,h = self.wait_image.get_size()
 			scale = .35
 			self.wait_image = pygame.transform.scale(self.wait_image, (int(w*scale), int(h*scale)))
 			self.wait_rect = self.wait_image.get_rect()
 			self.wait_rect.center = (320,240)
+
+			# win
+			self.win_image = pygame.image.load("../media/win.png")
+			w,h = self.win_image.get_size()
+			scale = .8
+			self.win_image = pygame.transform.scale(self.win_image, (int(w*scale), int(h*scale)))
+			self.win_rect = self.win_image.get_rect()
+			self.win_rect.center = (320,240)
+
+			# lose
+			self.lose_image = pygame.image.load("../media/lose.png")
+			w,h = self.lose_image.get_size()
+			scale = .8
+			self.lose_image = pygame.transform.scale(self.lose_image, (int(w*scale), int(h*scale)))
+			self.lose_rect = self.lose_image.get_rect()
+			self.lose_rect.center = (320,240)
+
+			self.turret_lives = 5
+			# 0 = waiting
+			# 1 = playing
+			# 2 = DC
+			self.conn_status = 0
 
 			# 2) set up game objects
 			self.parachuters = []
@@ -211,13 +225,13 @@ class GameSpace:
 			self.gun = Gun(self)
 			self.turret = Turret(self)
 
-			self.trans_info = []
+			self.trans_info = {"bullets": [], "parachutes": []}
+			self.client_events = []
+			self.dropper_out_of_troops = False
 
-			# font for display
 			self.font = pygame.font.Font(None,36)
 
 	def game_loop_iterate(self):
-			# calculate/set theta
 			mx, my = pygame.mouse.get_pos()
 			O = my - self.turret.rect.center[1]
 			A = mx - self.turret.rect.center[0]
@@ -230,46 +244,25 @@ class GameSpace:
 			# 5) user inputs
 			self.clean_parachuters()
 			self.clean_bullets()
+			# set flag to end game when the turret is out of lives
+			if self.turret_lives < 0:
+				self.conn_status = 4
+
 			for event in pygame.event.get():
 				if event.type == QUIT:
 					reactor.stop()
 				if self.conn_status == 1:
 					if event.type == MOUSEBUTTONDOWN:
-						if self.mode == 0:
-							if self.troops[0] > 0:
-								self.troops[0] -= 1
-								print "adding para"
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"",1,False,0,"left"))
-						elif self.mode == 1:
-							if self.troops[1] > 0:
-								self.troops[1] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),7,"purple_",1,True,0,"left"))
-						elif self.mode == 2:
-							if self.troops[2] > 0:
-								self.troops[2] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"blue_",1,False,0,"left"))
-						elif self.mode == 3:
-							if self.troops[3] > 0:
-								self.troops[3] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",1,True,0,"left"))
-						elif self.mode == 4:
-							if self.troops[4] > 0:
-								self.troops[4] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"green_",5,False,0,"left"))
-					if event.type == KEYDOWN:
-						if event.key == K_0:	
-							self.mode = 0
-						elif event.key == K_1:
-							self.mode = 1
-						elif event.key == K_2:
-							self.mode = 2
-						elif event.key == K_3:
-							self.mode = 3
-						elif event.key == K_4:
-							self.mode = 4
-					
+						#self.parachuters.append(Parachuter((mx, 10),1,self))
+						self.bullets.append(Bullet(self.theta,self))
 			# 6) send a tick to every game object
 			if self.conn_status == 1:
+				for event in self.client_events:
+						if event == "no more troops":
+							self.dropper_out_of_troops = True
+						else:
+							self.parachuters.append(Parachuter(event,self))
+				del self.client_events[:]
 				self.turret.tick()
 				self.gun.tick()
 				for parachuter in self.parachuters:
@@ -278,7 +271,13 @@ class GameSpace:
 					bullet.tick()
 
 			# 6.5 update trans_info
-			
+			self.trans_info['bullets'] = [(bullet.rect, bullet.theta) for bullet in self.bullets]
+			self.trans_info['parachuters'] = [(parachuter.rect.center,parachuter.speed,parachuter.color,parachuter.hitpoints,parachuter.sway,parachuter.sway_count,parachuter.sway_dir) for parachuter in self.parachuters]
+			self.trans_info['gun'] = (self.gun.rect, self.gun.theta_d)
+			self.trans_info['lost'] = self.conn_status
+
+			if self.dropper_out_of_troops and not self.parachuters:
+				self.conn_status = 3
 
 			# 7) display the game objects
 			self.screen.blit(self.bg,(0,0))
@@ -290,8 +289,11 @@ class GameSpace:
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
 				self.screen.blit(parachuter.image,parachuter.rect)
-			troops_string = "Cyborgs: " + str(self.troops)
-			text = self.font.render(troops_string,1,(255,255,255))
+			if self.conn_status == 4:
+				lives_string = "Lives: 0"
+			else:
+				lives_string = "Lives: " + str(self.turret_lives)
+			text = self.font.render(lives_string,1,(255,255,255))
 			textpos = text.get_rect()
 			textpos.centerx = self.bg.get_rect().centerx
 			self.screen.blit(text,textpos)
@@ -299,27 +301,29 @@ class GameSpace:
 				self.screen.blit(self.dc_image, self.dc_rect)
 			if self.conn_status == 0:
 				self.screen.blit(self.wait_image, self.wait_rect)
+			if self.conn_status == 3:
+				self.screen.blit(self.win_image, self.win_rect)
+			if self.conn_status == 4:
+				self.screen.blit(self.lose_image, self.lose_rect)
 			pygame.display.flip()
 
-	def update(self, trans_info):
-		del self.parachuters[:]
-		del self.bullets[:]
-		self.parachuters = [Parachuter(parachuter,self) for parachuter in trans_info["parachuters"]]
-		self.bullets = [Bullet((bullet[0].x, bullet[0].y), bullet[1], self) for bullet in trans_info["bullets"]]
-		self.gun.rect = trans_info['gun'][0]
-		self.gun.theta_d = trans_info['gun'][1]
 
 	def clean_parachuters(self):
+		pre_clean = len(self.parachuters)
 		self.parachuters = [value for value in self.parachuters if value.reached_bottom == False]
+		post_clean = len(self.parachuters)
+		self.turret_lives -= pre_clean - post_clean
 		self.parachuters = [value for value in self.parachuters if value.hit == False]
 	def clean_bullets(self):
 		self.bullets = [value for value in self.bullets if value.out_of_bounds == False]
 		self.bullets = [value for value in self.bullets if value.hit == False]
 
-if __name__ ==  '__main__':
+
+if __name__ == '__main__':
 	gs = GameSpace()
 	gs.init()
 	lc = LoopingCall(gs.game_loop_iterate)
 	lc.start(1/60)
-	reactor.connectTCP('localhost', 42668, ParaConnFactory(gs))
+	reactor.listenTCP(42668,ParaConnFactory(gs))
 	reactor.run()
+	lc.stop()
