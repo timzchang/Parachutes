@@ -18,6 +18,14 @@ class ParaConnection(Protocol):
 
 	def connectionMade(self):
 		print "connection made"
+		self.lc = LoopingCall(self.gs_pickler)
+		self.lc.start(1/24)
+
+	def gs_pickler(self):
+		pv = pickle.dumps(self.gs.trans_info)
+		pv = zlib.compress(pv)
+		self.transport.write(pv)
+		del self.gs.trans_info[:]
 
 	def dataReceived(self, data):
 		pv = zlib.decompress(data)
@@ -149,7 +157,7 @@ class GameSpace:
 			self.gun = Gun(self)
 			self.turret = Turret(self)
 
-			self.trans_info = {"bullets": [], "parachutes": []}
+			self.trans_info = []
 
 	def game_loop_iterate(self):
 			mx, my = pygame.mouse.get_pos()
@@ -167,6 +175,9 @@ class GameSpace:
 			for event in pygame.event.get():
 				if event.type == QUIT:
 					reactor.stop()
+				if event.type == MOUSEBUTTONDOWN:
+					self.trans_info.append(pygame.mouse.get_pos())
+					
 				# if event.type == MOUSEBUTTONDOWN:
 				#	self.parachuters.append(Parachuter((mx, 10),1,self))
 				#	self.bullets.append(Bullet(self.theta,self))
@@ -181,8 +192,7 @@ class GameSpace:
 				bullet.tick()
 
 			# 6.5 update trans_info
-			self.trans_info['bullets'] = [bullet.rect for bullet in self.bullets]
-			self.trans_info['parachuters'] = [parachute.rect for parachute in self.parachuters]
+			
 
 			# 7) display the game objects
 			self.screen.blit(self.bg,(0,0))

@@ -130,6 +130,7 @@ class GameSpace:
 			self.turret = Turret(self)
 
 			self.trans_info = {"bullets": [], "parachutes": []}
+			self.client_events = []
 
 	def game_loop_iterate(self):
 			mx, my = pygame.mouse.get_pos()
@@ -148,9 +149,11 @@ class GameSpace:
 				if event.type == QUIT:
 					reactor.stop()
 				if event.type == MOUSEBUTTONDOWN:
-					self.parachuters.append(Parachuter((mx, 10),1,self))
+					#self.parachuters.append(Parachuter((mx, 10),1,self))
 					self.bullets.append(Bullet(self.theta,self))
-					
+			for event in self.client_events:
+					self.parachuters.append(Parachuter((event[0], 10),1,self))
+			del self.client_events[:]
 			# 6) send a tick to every game object
 			self.turret.tick()
 			self.gun.tick()
@@ -199,7 +202,9 @@ class ParaConnection(Protocol):
 		self.transport.write(pv)
 
 	def dataReceived(self, data):
-		print "data received"
+		pv = zlib.decompress(data)
+		pv = pickle.loads(pv)
+		self.gs.client_events = pv
 
 	def connectionLost(self, reason):
 		print "connection lost to player 2, ", reason
