@@ -14,6 +14,7 @@ import cPickle as pickle
 import zlib
 from dropper_obj import *
 
+
 class ParaConnection(Protocol):
 	def __init__(self, addr, gs):
 		self.addr = addr
@@ -136,23 +137,23 @@ class GameSpace:
 						if self.mode == 0:
 							if self.troops[0] > 0:
 								self.troops[0] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"",1,False,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),4,"",2,False,0,"left"))
 						elif self.mode == 1:
 							if self.troops[1] > 0:
 								self.troops[1] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),7,"purple_",1,True,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"purple_",2,True,0,"left"))
 						elif self.mode == 2:
 							if self.troops[2] > 0:
 								self.troops[2] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"blue_",1,False,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),1,"blue_",2,False,0,"left"))
 						elif self.mode == 3:
 							if self.troops[3] > 0:
 								self.troops[3] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",1,True,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",2,True,0,"left"))
 						elif self.mode == 4:
 							if self.troops[4] > 0:
 								self.troops[4] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"green_",5,False,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),8,"green_",7,False,0,"left"))
 					if event.type == KEYDOWN:
 						if event.key == K_0:	
 							self.mode = 0
@@ -226,5 +227,5 @@ if __name__ ==  '__main__':
 	gs.init()
 	lc = LoopingCall(gs.game_loop_iterate)
 	lc.start(1/60)
-	reactor.connectTCP('localhost', 42668, ParaConnFactory(gs))
+	reactor.connectTCP('66.254.249.245', 42668, ParaConnFactory(gs))
 	reactor.run()
