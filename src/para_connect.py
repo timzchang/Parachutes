@@ -102,25 +102,28 @@ class Gun(pygame.sprite.Sprite):
 		self.image = pygame.transform.rotate(self.orig_image,self.theta_d + 200)
 
 class Parachuter(pygame.sprite.Sprite):
-	def __init__(self,center,speed,gs=None):
+	def __init__(self,parachuter_info,gs=None):
 		pygame.sprite.Sprite.__init__(self)
 		self.gs = gs
-		self.image = pygame.image.load("../media/parachute.gif")
+		self.color = parachuter_info[2]
+		self.image = pygame.image.load("../media/" + self.color +"parachute.png")
 		w,h = self.image.get_size()
 		scale = .5
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
 		self.rect = self.image.get_rect()
 		self.para_rect = pygame.rect.Rect((0,0),(64,20))
 		self.body_rect = pygame.rect.Rect((0,0),(17,25))
-		self.rect.center = center
+		self.rect.center = parachuter_info[0]
 		self.para_rect.center = (self.rect.center[0], self.rect.center[1] - 16)
 		self.body_rect.midbottom = (self.rect.midbottom[0] - 7, self.rect.midbottom[1])
 		self.speed = 6
 		self.dy = 1
 		self.reached_bottom = False
 		self.hit = False
+		self.hitpoints = parachuter_info[3]
 		self.counter = 0
-		self.speed = speed
+		self.speed = parachuter_info[1]
+		self.sway = parachuter_info[4]
 		
 	def tick(self):
 		self.counter += 1
@@ -176,7 +179,7 @@ class GameSpace:
 				if event.type == QUIT:
 					reactor.stop()
 				if event.type == MOUSEBUTTONDOWN:
-					self.trans_info.append(pygame.mouse.get_pos())
+					self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"blue_",1,False))
 					
 				# if event.type == MOUSEBUTTONDOWN:
 				#	self.parachuters.append(Parachuter((mx, 10),1,self))
@@ -209,7 +212,7 @@ class GameSpace:
 	def update(self, trans_info):
 		del self.parachuters[:]
 		del self.bullets[:]
-		self.parachuters = [Parachuter(parachuter[0],parachuter[1],self) for parachuter in trans_info["parachuters"]]
+		self.parachuters = [Parachuter(parachuter,self) for parachuter in trans_info["parachuters"]]
 		self.bullets = [Bullet((bullet[0].x, bullet[0].y), bullet[1], self) for bullet in trans_info["bullets"]]
 		self.gun.rect = trans_info['gun'][0]
 		self.gun.theta_d = trans_info['gun'][1]

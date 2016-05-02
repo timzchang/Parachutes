@@ -75,24 +75,27 @@ class Gun(pygame.sprite.Sprite):
 		self.rect.center = (320+self.radius*math.cos(self.gs.theta),435-self.radius*math.sin(self.gs.theta))
 
 class Parachuter(pygame.sprite.Sprite):
-	def __init__(self,start_pos,speed,gs=None):
+	def __init__(self,parachuter_info,gs=None):
 		pygame.sprite.Sprite.__init__(self)
 		self.gs = gs
-		self.image = pygame.image.load("../media/parachute.gif")
+		self.color = parachuter_info[2]
+		self.image = pygame.image.load("../media/" + self.color + "parachute.png")
 		w,h = self.image.get_size()
 		scale = .5
 		self.image = pygame.transform.scale(self.image, (int(w*scale), int(h*scale)))
 		self.rect = self.image.get_rect()
 		self.para_rect = pygame.rect.Rect((0,0),(64,20))
 		self.body_rect = pygame.rect.Rect((0,0),(17,25))
-		self.rect.center = start_pos
+		self.rect.center = parachuter_info[0]
 		self.para_rect.center = (self.rect.center[0], self.rect.center[1] - 16)
 		self.body_rect.midbottom = (self.rect.midbottom[0] - 7, self.rect.midbottom[1])
 		self.dy = 1
 		self.reached_bottom = False
 		self.hit = False
+		self.hitpoints = parachuter_info[3]
 		self.counter = 0
-		self.speed = speed
+		self.speed = parachuter_info[1]
+		self.sway = parachuter_info[4]
 		
 	def tick(self):
 		self.counter += 1
@@ -152,7 +155,7 @@ class GameSpace:
 					#self.parachuters.append(Parachuter((mx, 10),1,self))
 					self.bullets.append(Bullet(self.theta,self))
 			for event in self.client_events:
-					self.parachuters.append(Parachuter((event[0], 10),1,self))
+					self.parachuters.append(Parachuter(event,self))
 			del self.client_events[:]
 			# 6) send a tick to every game object
 			self.turret.tick()
@@ -164,7 +167,7 @@ class GameSpace:
 
 			# 6.5 update trans_info
 			self.trans_info['bullets'] = [(bullet.rect, bullet.theta) for bullet in self.bullets]
-			self.trans_info['parachuters'] = [(parachuter.rect.center,parachuter.speed) for parachuter in self.parachuters]
+			self.trans_info['parachuters'] = [(parachuter.rect.center,parachuter.speed,parachuter.color,parachuter.hitpoints,parachuter.sway) for parachuter in self.parachuters]
 			self.trans_info['gun'] = (self.gun.rect, self.gun.theta_d)
 
 			# 7) display the game objects
