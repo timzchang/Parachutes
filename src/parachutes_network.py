@@ -96,25 +96,49 @@ class Parachuter(pygame.sprite.Sprite):
 		self.counter = 0
 		self.speed = parachuter_info[1]
 		self.sway = parachuter_info[4]
-		
+		self.sway_count = parachuter_info[5]
+		self.sway_dir = parachuter_info[6]
+
 	def tick(self):
 		self.counter += 1
 		if self.counter == self.speed:
 			self.counter = 0
-			self.rect = self.rect.move(0,self.dy)
-			self.para_rect = self.para_rect.move(0,self.dy)
-			self.body_rect = self.body_rect.move(0,self.dy)
+			if self.sway:
+				if self.sway_dir == "left":
+					self.sway_count += 1
+					if self.sway_count == 50:
+						self.sway_count = 0
+						self.sway_dir = "right"
+					self.rect = self.rect.move(-1,self.dy)
+					self.para_rect = self.para_rect.move(-1,self.dy)
+					self.body_rect = self.body_rect.move(-1,self.dy)
+				else:
+					self.sway_count += 1
+					if self.sway_count == 50:
+						self.sway_count = 0
+						self.sway_dir = "left"
+					self.rect = self.rect.move(1,self.dy)
+					self.para_rect = self.para_rect.move(1,self.dy)
+					self.body_rect = self.body_rect.move(1,self.dy)
+			else:
+				self.rect = self.rect.move(0,self.dy)
+				self.para_rect = self.para_rect.move(0,self.dy)
+				self.body_rect = self.body_rect.move(0,self.dy)
 		if self.rect.center[1] >= 450:
 			self.reached_bottom = True
 
 		index = self.body_rect.collidelist([bullet.rect for bullet in self.gs.bullets if bullet.hit == False])
 		if index >= 0:
+			self.hitpoints -= 1
+			if self.hitpoints == 0:
+				self.hit = True
 			self.gs.bullets[index].hit = True
-			self.hit = True
 		index = self.para_rect.collidelist([bullet.rect for bullet in self.gs.bullets if bullet.hit == False])
 		if index >= 0:	
+			self.hitpoints -= 1
+			if self.hitpoints == 0:
+				self.hit = True
 			self.gs.bullets[index].hit = True
-			self.hit = True
 
 class GameSpace:
 	def init(self):
@@ -167,7 +191,7 @@ class GameSpace:
 
 			# 6.5 update trans_info
 			self.trans_info['bullets'] = [(bullet.rect, bullet.theta) for bullet in self.bullets]
-			self.trans_info['parachuters'] = [(parachuter.rect.center,parachuter.speed,parachuter.color,parachuter.hitpoints,parachuter.sway) for parachuter in self.parachuters]
+			self.trans_info['parachuters'] = [(parachuter.rect.center,parachuter.speed,parachuter.color,parachuter.hitpoints,parachuter.sway,parachuter.sway_count,parachuter.sway_dir) for parachuter in self.parachuters]
 			self.trans_info['gun'] = (self.gun.rect, self.gun.theta_d)
 
 			# 7) display the game objects
