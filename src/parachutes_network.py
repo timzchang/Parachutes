@@ -32,7 +32,7 @@ class ParaConnection(Protocol):
 	def dataReceived(self, data):
 		pv = zlib.decompress(data)
 		pv = pickle.loads(pv)
-		#print len(pv)
+		# print len(pv)
 		self.gs.client_events = pv
 
 	def connectionLost(self, reason):

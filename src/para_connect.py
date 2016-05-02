@@ -19,7 +19,7 @@ class ParaConnection(Protocol):
 		self.gs = gs
 
 	def connectionMade(self):
-		print "connection made"
+		# print "connection made"
 		self.lc = LoopingCall(self.gs_pickler)
 		self.lc.start(1/24)
 		self.gs.conn_status = 1
@@ -49,7 +49,7 @@ class ParaConnFactory(ReconnectingClientFactory):
 		return ParaConnection(addr, self.gs)
 
 	def clientConnectionFailed(self, connector, reason):
-		print "retry connection"
+		# print "retry connection"
 		ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
 
 class Bullet(pygame.sprite.Sprite):
