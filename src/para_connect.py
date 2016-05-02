@@ -176,6 +176,8 @@ class GameSpace:
 			pygame.display.set_caption("Parachutes")
 			self.bg = pygame.image.load("../media/background.png")
 			self.bg = pygame.transform.scale(self.bg, (640,480))
+			self.mode = 0
+			self.troops = [10,10,10,10,10]
 
 			# 2) set up game objects
 			self.parachuters = []
@@ -202,8 +204,37 @@ class GameSpace:
 				if event.type == QUIT:
 					reactor.stop()
 				if event.type == MOUSEBUTTONDOWN:
-					self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"purple_",5,True,0,"left"))
-					
+					if self.mode == 0:
+						if self.troops[0] > 0:
+							self.troops[0] -= 1
+							self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"",1,False,0,"left"))
+					elif self.mode == 1:
+						if self.troops[1] > 0:
+							self.troops[1] -= 1
+							self.trans_info.append(((pygame.mouse.get_pos()[0],10),7,"purple_",1,True,0,"left"))
+					elif self.mode == 2:
+						if self.troops[2] > 0:
+							self.troops[2] -= 1
+							self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"blue_",1,False,0,"left"))
+					elif self.mode == 3:
+						if self.troops[3] > 0:
+							self.troops[3] -= 1
+							self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",1,True,0,"left"))
+					elif self.mode == 4:
+						if self.troops[4] > 1:
+							self.troops[4] -= 1
+							self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"green_",5,False,0,"left"))
+				if event.type == KEYDOWN:
+					if event.key == K_0:	
+						self.mode = 0
+					elif event.key == K_1:
+						self.mode = 1
+					elif event.key == K_2:
+						self.mode = 2
+					elif event.key == K_3:
+						self.mode = 3
+					elif event.key == K_4:
+						self.mode = 4
 				# if event.type == MOUSEBUTTONDOWN:
 				#	self.parachuters.append(Parachuter((mx, 10),1,self))
 				#	self.bullets.append(Bullet(self.theta,self))
