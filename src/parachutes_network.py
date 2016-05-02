@@ -1,6 +1,4 @@
-# Name: Christopher Syers
-# Date: April 15, 2016
-# PyGame Primer
+# Name: Christopher Syers, Tim Chang
 
 import math
 import os
@@ -14,6 +12,39 @@ from twisted.internet.protocol import Factory
 from twisted.internet.protocol import Protocol
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
+
+class ParaConnection(Protocol):
+	def __init__(self, addr, gs):
+		self.addr = addr
+		self.gs = gs
+
+	def connectionMade(self):
+		# print "connection made to player 2"
+		self.lc = LoopingCall(self.gs_pickler)
+		self.lc.start(1/24)
+		self.gs.conn_status = 1
+
+	def gs_pickler(self):
+		pv = pickle.dumps(self.gs.trans_info)
+		pv = zlib.compress(pv)
+		self.transport.write(pv)
+
+	def dataReceived(self, data):
+		pv = zlib.decompress(data)
+		pv = pickle.loads(pv)
+		self.gs.client_events = pv
+
+	def connectionLost(self, reason):
+		# print "connection lost to player 2, ", reason
+		self.gs.conn_status = 2
+		self.lc.stop()
+
+class ParaConnFactory(Factory):
+	def __init__(self, gs):
+		self.gs = gs
+
+	def buildProtocol(self, addr):
+		return ParaConnection(addr, self.gs)
 
 class Bullet(pygame.sprite.Sprite):
 	def __init__(self,theta,gs=None):
@@ -149,8 +180,26 @@ class GameSpace:
 			pygame.display.set_caption("Parachutes")
 			self.bg = pygame.image.load("../media/background.png")
 			self.bg = pygame.transform.scale(self.bg, (640,480))
+			self.dc_image = pygame.image.load("../media/dc.png")
+			w,h = self.dc_image.get_size()
+			scale = .45
+			self.dc_image = pygame.transform.scale(self.dc_image, (int(w*scale), int(h*scale)))
+			self.dc_rect = self.dc_image.get_rect()
+			self.dc_rect.center = (320,240)
+			
+			# wait image
+			self.wait_image = pygame.image.load("../media/wait_p2.png")
+			w,h = self.wait_image.get_size()
+			scale = .35
+			self.wait_image = pygame.transform.scale(self.wait_image, (int(w*scale), int(h*scale)))
+			self.wait_rect = self.wait_image.get_rect()
+			self.wait_rect.center = (320,240)
 			self.turret_lives = 5
 			self.lost = False
+			# 0 = waiting
+			# 1 = playing
+			# 2 = DC
+			self.conn_status = 0
 
 			# 2) set up game objects
 			self.parachuters = []
@@ -182,19 +231,20 @@ class GameSpace:
 			for event in pygame.event.get():
 				if event.type == QUIT:
 					reactor.stop()
-				if event.type == MOUSEBUTTONDOWN:
-					#self.parachuters.append(Parachuter((mx, 10),1,self))
-					self.bullets.append(Bullet(self.theta,self))
-			for event in self.client_events:
-					self.parachuters.append(Parachuter(event,self))
-			del self.client_events[:]
-			# 6) send a tick to every game object
-			self.turret.tick()
-			self.gun.tick()
-			for parachuter in self.parachuters:
-				parachuter.tick()
-			for bullet in self.bullets:
-				bullet.tick()
+				if self.conn_status == 1:
+					if event.type == MOUSEBUTTONDOWN:
+						#self.parachuters.append(Parachuter((mx, 10),1,self))
+						self.bullets.append(Bullet(self.theta,self))
+					for event in self.client_events:
+							self.parachuters.append(Parachuter(event,self))
+					del self.client_events[:]
+					# 6) send a tick to every game object
+					self.turret.tick()
+					self.gun.tick()
+					for parachuter in self.parachuters:
+						parachuter.tick()
+					for bullet in self.bullets:
+						bullet.tick()
 
 			# 6.5 update trans_info
 			self.trans_info['bullets'] = [(bullet.rect, bullet.theta) for bullet in self.bullets]
@@ -216,6 +266,10 @@ class GameSpace:
 			textpos = text.get_rect()
 			textpos.centerx = self.bg.get_rect().centerx
 			self.screen.blit(text,textpos)
+			if self.conn_status == 2:
+				self.screen.blit(self.dc_image, self.dc_rect)
+			if self.conn_status == 0:
+				self.screen.blit(self.wait_image, self.wait_rect)
 			pygame.display.flip()
 
 
@@ -229,36 +283,6 @@ class GameSpace:
 		self.bullets = [value for value in self.bullets if value.out_of_bounds == False]
 		self.bullets = [value for value in self.bullets if value.hit == False]
 
-class ParaConnection(Protocol):
-	def __init__(self, addr, gs):
-		self.addr = addr
-		self.gs = gs
-
-	def connectionMade(self):
-		print "connection made to player 2"
-		self.lc = LoopingCall(self.gs_pickler)
-		self.lc.start(1/24)
-
-	def gs_pickler(self):
-		pv = pickle.dumps(self.gs.trans_info)
-		pv = zlib.compress(pv)
-		self.transport.write(pv)
-
-	def dataReceived(self, data):
-		pv = zlib.decompress(data)
-		pv = pickle.loads(pv)
-		self.gs.client_events = pv
-
-	def connectionLost(self, reason):
-		print "connection lost to player 2, ", reason
-		self.lc.stop()
-
-class ParaConnFactory(Factory):
-	def __init__(self, gs):
-		self.gs = gs
-
-	def buildProtocol(self, addr):
-		return ParaConnection(addr, self.gs)
 
 if __name__ == '__main__':
 	gs = GameSpace()

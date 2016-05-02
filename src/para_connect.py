@@ -1,3 +1,5 @@
+# Name: Christopher Syers, Tim Chang
+
 import math
 import os
 import sys
@@ -5,7 +7,7 @@ import pygame
 from pygame.locals import *
 from twisted.internet.protocol import ClientFactory
 from twisted.internet.protocol import Factory
-from twisted.internet.protocol import Protocol
+from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 import cPickle as pickle
@@ -20,6 +22,7 @@ class ParaConnection(Protocol):
 		print "connection made"
 		self.lc = LoopingCall(self.gs_pickler)
 		self.lc.start(1/24)
+		self.gs.conn_status = 1
 
 	def gs_pickler(self):
 		pv = pickle.dumps(self.gs.trans_info)
@@ -33,15 +36,21 @@ class ParaConnection(Protocol):
 		self.gs.update(pv)
 
 	def connectionLost(self, reason):
-		print "connection lost: ", reason
-	#	reactor.stop()
+		# print "connection lost: ", reason
+		self.gs.conn_status = 2
 
-class ParaConnFactory(ClientFactory):
+
+class ParaConnFactory(ReconnectingClientFactory):
 	def __init__(self, gs):
 		self.gs = gs
 
 	def buildProtocol(self, addr):
+		self.resetDelay()
 		return ParaConnection(addr, self.gs)
+
+	def clientConnectionFailed(self, connector, reason):
+		print "retry connection"
+		ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
 
 class Bullet(pygame.sprite.Sprite):
 	def __init__(self, start_pos, theta,gs=None):
@@ -176,8 +185,25 @@ class GameSpace:
 			pygame.display.set_caption("Parachutes")
 			self.bg = pygame.image.load("../media/background.png")
 			self.bg = pygame.transform.scale(self.bg, (640,480))
+			self.conn_status = 0
+
+			# dc image
+			self.dc_image = pygame.image.load("../media/dc.png")
+			w,h = self.dc_image.get_size()
+			scale = .45
+			self.dc_image = pygame.transform.scale(self.dc_image, (int(w*scale), int(h*scale)))
+			self.dc_rect = self.dc_image.get_rect()
+			self.dc_rect.center = (320,240)
 			self.mode = 0
 			self.troops = [10,10,10,10,10]
+
+			# wait image
+			self.wait_image = pygame.image.load("../media/wait_p1.png")
+			w,h = self.wait_image.get_size()
+			scale = .35
+			self.wait_image = pygame.transform.scale(self.wait_image, (int(w*scale), int(h*scale)))
+			self.wait_rect = self.wait_image.get_rect()
+			self.wait_rect.center = (320,240)
 
 			# 2) set up game objects
 			self.parachuters = []
@@ -191,6 +217,7 @@ class GameSpace:
 			self.font = pygame.font.Font(None,36)
 
 	def game_loop_iterate(self):
+			# calculate/set theta
 			mx, my = pygame.mouse.get_pos()
 			O = my - self.turret.rect.center[1]
 			A = mx - self.turret.rect.center[0]
@@ -206,50 +233,47 @@ class GameSpace:
 			for event in pygame.event.get():
 				if event.type == QUIT:
 					reactor.stop()
-				if event.type == MOUSEBUTTONDOWN:
-					if self.mode == 0:
-						if self.troops[0] > 0:
-							self.troops[0] -= 1
-							self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"",1,False,0,"left"))
-					elif self.mode == 1:
-						if self.troops[1] > 0:
-							self.troops[1] -= 1
-							self.trans_info.append(((pygame.mouse.get_pos()[0],10),7,"purple_",1,True,0,"left"))
-					elif self.mode == 2:
-						if self.troops[2] > 0:
-							self.troops[2] -= 1
-							self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"blue_",1,False,0,"left"))
-					elif self.mode == 3:
-						if self.troops[3] > 0:
-							self.troops[3] -= 1
-							self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",1,True,0,"left"))
-					elif self.mode == 4:
-						if self.troops[4] > 0:
-							self.troops[4] -= 1
-							self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"green_",5,False,0,"left"))
-				if event.type == KEYDOWN:
-					if event.key == K_0:	
-						self.mode = 0
-					elif event.key == K_1:
-						self.mode = 1
-					elif event.key == K_2:
-						self.mode = 2
-					elif event.key == K_3:
-						self.mode = 3
-					elif event.key == K_4:
-						self.mode = 4
-				# if event.type == MOUSEBUTTONDOWN:
-				#	self.parachuters.append(Parachuter((mx, 10),1,self))
-				#	self.bullets.append(Bullet(self.theta,self))
+				if self.conn_status == 1:
+					if event.type == MOUSEBUTTONDOWN:
+						if self.mode == 0:
+							if self.troops[0] > 0:
+								self.troops[0] -= 1
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"",1,False,0,"left"))
+						elif self.mode == 1:
+							if self.troops[1] > 0:
+								self.troops[1] -= 1
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),7,"purple_",1,True,0,"left"))
+						elif self.mode == 2:
+							if self.troops[2] > 0:
+								self.troops[2] -= 1
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"blue_",1,False,0,"left"))
+						elif self.mode == 3:
+							if self.troops[3] > 0:
+								self.troops[3] -= 1
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",1,True,0,"left"))
+						elif self.mode == 4:
+							if self.troops[4] > 0:
+								self.troops[4] -= 1
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"green_",5,False,0,"left"))
+					if event.type == KEYDOWN:
+						if event.key == K_0:	
+							self.mode = 0
+						elif event.key == K_1:
+							self.mode = 1
+						elif event.key == K_2:
+							self.mode = 2
+						elif event.key == K_3:
+							self.mode = 3
+						elif event.key == K_4:
+							self.mode = 4
 					
 			# 6) send a tick to every game object
-			self.turret.tick()
-			self.gun.tick()
-		#	self.gun.tick()
-			for parachuter in self.parachuters:
-				parachuter.tick()
-			for bullet in self.bullets:
-				bullet.tick()
+				self.turret.tick()
+				self.gun.tick()
+				for parachuter in self.parachuters:
+					parachuter.tick()
+				for bullet in self.bullets:
+					bullet.tick()
 
 			# 6.5 update trans_info
 			
@@ -269,6 +293,10 @@ class GameSpace:
 			textpos = text.get_rect()
 			textpos.centerx = self.bg.get_rect().centerx
 			self.screen.blit(text,textpos)
+			if self.conn_status == 2:
+				self.screen.blit(self.dc_image, self.dc_rect)
+			if self.conn_status == 0:
+				self.screen.blit(self.wait_image, self.wait_rect)
 			pygame.display.flip()
 
 	def update(self, trans_info):
