@@ -32,6 +32,7 @@ class ParaConnection(Protocol):
 	def dataReceived(self, data):
 		pv = zlib.decompress(data)
 		pv = pickle.loads(pv)
+		#print len(pv)
 		self.gs.client_events = pv
 
 	def connectionLost(self, reason):
@@ -236,15 +237,17 @@ class GameSpace:
 						#self.parachuters.append(Parachuter((mx, 10),1,self))
 						self.bullets.append(Bullet(self.theta,self))
 					for event in self.client_events:
+							print "adding para"
 							self.parachuters.append(Parachuter(event,self))
 					del self.client_events[:]
-					# 6) send a tick to every game object
-					self.turret.tick()
-					self.gun.tick()
-					for parachuter in self.parachuters:
-						parachuter.tick()
-					for bullet in self.bullets:
-						bullet.tick()
+			# 6) send a tick to every game object
+			if self.conn_status == 1:
+				self.turret.tick()
+				self.gun.tick()
+				for parachuter in self.parachuters:
+					parachuter.tick()
+				for bullet in self.bullets:
+					bullet.tick()
 
 			# 6.5 update trans_info
 			self.trans_info['bullets'] = [(bullet.rect, bullet.theta) for bullet in self.bullets]

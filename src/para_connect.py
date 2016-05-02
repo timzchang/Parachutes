@@ -238,6 +238,7 @@ class GameSpace:
 						if self.mode == 0:
 							if self.troops[0] > 0:
 								self.troops[0] -= 1
+								print "adding para"
 								self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"",1,False,0,"left"))
 						elif self.mode == 1:
 							if self.troops[1] > 0:
@@ -268,6 +269,7 @@ class GameSpace:
 							self.mode = 4
 					
 			# 6) send a tick to every game object
+			if self.conn_status == 1:
 				self.turret.tick()
 				self.gun.tick()
 				for parachuter in self.parachuters:
