@@ -187,6 +187,9 @@ class GameSpace:
 
 			self.trans_info = []
 
+			# font for display
+			self.font = pygame.font.Font(None,36)
+
 	def game_loop_iterate(self):
 			mx, my = pygame.mouse.get_pos()
 			O = my - self.turret.rect.center[1]
@@ -221,7 +224,7 @@ class GameSpace:
 							self.troops[3] -= 1
 							self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",1,True,0,"left"))
 					elif self.mode == 4:
-						if self.troops[4] > 1:
+						if self.troops[4] > 0:
 							self.troops[4] -= 1
 							self.trans_info.append(((pygame.mouse.get_pos()[0],10),10,"green_",5,False,0,"left"))
 				if event.type == KEYDOWN:
@@ -261,6 +264,11 @@ class GameSpace:
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
 				self.screen.blit(parachuter.image,parachuter.rect)
+			troops_string = "Cyborgs: " + str(self.troops)
+			text = self.font.render(troops_string,1,(255,255,255))
+			textpos = text.get_rect()
+			textpos.centerx = self.bg.get_rect().centerx
+			self.screen.blit(text,textpos)
 			pygame.display.flip()
 
 	def update(self, trans_info):

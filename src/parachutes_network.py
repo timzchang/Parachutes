@@ -149,6 +149,8 @@ class GameSpace:
 			pygame.display.set_caption("Parachutes")
 			self.bg = pygame.image.load("../media/background.png")
 			self.bg = pygame.transform.scale(self.bg, (640,480))
+			self.turret_lives = 5
+			self.lost = False
 
 			# 2) set up game objects
 			self.parachuters = []
@@ -158,6 +160,8 @@ class GameSpace:
 
 			self.trans_info = {"bullets": [], "parachutes": []}
 			self.client_events = []
+
+			self.font = pygame.font.Font(None,36)
 
 	def game_loop_iterate(self):
 			mx, my = pygame.mouse.get_pos()
@@ -172,6 +176,9 @@ class GameSpace:
 			# 5) user inputs
 			self.clean_parachuters()
 			self.clean_bullets()
+			# set flag to end game when the turret is out of lives
+			if self.turret_lives < 0:
+				self.lost = True
 			for event in pygame.event.get():
 				if event.type == QUIT:
 					reactor.stop()
@@ -204,10 +211,19 @@ class GameSpace:
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.para_rect.left,parachuter.para_rect.top,parachuter.para_rect.width,parachuter.para_rect.height))
 			#	pygame.draw.rect(parachuter.image,(255,255,0),(parachuter.body_rect.x,parachuter.body_rect.y,parachuter.body_rect.width,parachuter.body_rect.height))
 				self.screen.blit(parachuter.image,parachuter.rect)
+			lives_string = "Lives: " + str(self.turret_lives)
+			text = self.font.render(lives_string,1,(255,255,255))
+			textpos = text.get_rect()
+			textpos.centerx = self.bg.get_rect().centerx
+			self.screen.blit(text,textpos)
 			pygame.display.flip()
 
+
 	def clean_parachuters(self):
+		pre_clean = len(self.parachuters)
 		self.parachuters = [value for value in self.parachuters if value.reached_bottom == False]
+		post_clean = len(self.parachuters)
+		self.turret_lives -= pre_clean - post_clean
 		self.parachuters = [value for value in self.parachuters if value.hit == False]
 	def clean_bullets(self):
 		self.bullets = [value for value in self.bullets if value.out_of_bounds == False]
