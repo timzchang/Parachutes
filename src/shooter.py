@@ -1,4 +1,4 @@
-'''
+"""
 Name: Christopher Syers, Tim Chang
 Date: May 2, 2016
 CSE30332 Programming Paradigms Final Project
@@ -10,7 +10,7 @@ start a game of parachutes. This player in this file will
 attempts to shoot down the cyborgs that are dropped by the 
 other player. The game ends when the dropper is out of cyborgs 
 to drop or the shooter runs out of lives, whichever comes first.
-'''
+"""
 
 import math
 import os
@@ -25,6 +25,8 @@ from twisted.internet.protocol import Protocol
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from shooter_obj import *
+
+port = 42668
 
 class ParaConnection(Protocol):
 	"""ParaConnection: connection class of shooter. Connect to 
@@ -247,6 +249,6 @@ if __name__ == '__main__':
 	gs.init()
 	lc = LoopingCall(gs.game_loop_iterate)
 	lc.start(1/60)
-	reactor.listenTCP(42668,ParaConnFactory(gs))
+	reactor.listenTCP(port,ParaConnFactory(gs))
 	reactor.run()
 	lc.stop()

@@ -1,3 +1,16 @@
+"""
+Name: Christopher Syers, Tim Chang
+Date: May 2, 2016
+CSE30332 Programming Paradigms Final Project
+
+shooter_obj.py
+
+Game objects for the dropper.py file. Contains:
+	Bullet:		bullet that can shoot down parachuters
+	Turret:		base of the turret that shoots down the parachuters
+	Gun:		barrel of the turret
+	Parachuter:	object that falls from the sky and gets shot down
+"""
 import math
 import random
 import os
