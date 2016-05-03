@@ -26,7 +26,7 @@ from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from defender_obj import *
 
-port = 42668
+port = 40040
 
 class ParaConnection(Protocol):
 	"""ParaConnection: connection class of shooter. Connect to 

@@ -26,7 +26,7 @@ import zlib
 from dropper_obj import *
 
 host = 'localhost'
-port = 42668
+port = 40040
 
 class ParaConnection(Protocol):
 	"""
