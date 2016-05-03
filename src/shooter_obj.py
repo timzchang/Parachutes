@@ -1,4 +1,5 @@
 import math
+import random
 import os
 import sys
 import pygame
@@ -119,12 +120,24 @@ class Parachuter(pygame.sprite.Sprite):
 		index = self.body_rect.collidelist([bullet.rect for bullet in self.gs.bullets if bullet.hit == False])
 		if index >= 0:
 			self.hitpoints -= 1
+			if self.hitpoints > 0:
+				if self.color == "purple_":
+					rand = 40+random.random()*600
+					self.rect.center = (rand,self.rect.center[1])
+					self.body_rect.center = (rand,self.body_rect.center[1])
+					self.para_rect.center = (rand,self.para_rect.center[1])
 			if self.hitpoints == 0:
 				self.hit = True
 			self.gs.bullets[index].hit = True
 		index = self.para_rect.collidelist([bullet.rect for bullet in self.gs.bullets if bullet.hit == False])
 		if index >= 0:	
 			self.hitpoints -= 1
+			if self.hitpoints > 0:
+				if self.color == "purple_":
+					rand = 40+random.random()*600
+					self.rect.center = (rand,self.rect.center[1])
+					self.body_rect.center = (rand,self.body_rect.center[1])
+					self.para_rect.center = (rand,self.para_rect.center[1])
 			if self.hitpoints == 0:
 				self.hit = True
 			self.gs.bullets[index].hit = True

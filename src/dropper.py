@@ -73,7 +73,7 @@ class GameSpace:
 			self.dc_rect = self.dc_image.get_rect()
 			self.dc_rect.center = (320,240)
 			self.mode = 0
-			self.troops = [10,10,10,10,10]
+			self.troops = [20,15,15,15,10]
 
 			# wait image
 			self.wait_image = pygame.image.load("../media/wait_p1.png")
@@ -141,7 +141,7 @@ class GameSpace:
 						elif self.mode == 1:
 							if self.troops[1] > 0:
 								self.troops[1] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),2,"purple_",2,True,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),4,"purple_",3,False,0,"left"))
 						elif self.mode == 2:
 							if self.troops[2] > 0:
 								self.troops[2] -= 1
@@ -227,5 +227,5 @@ if __name__ ==  '__main__':
 	gs.init()
 	lc = LoopingCall(gs.game_loop_iterate)
 	lc.start(1/60)
-	reactor.connectTCP('66.254.249.245', 42668, ParaConnFactory(gs))
+	reactor.connectTCP('10.18.73.190', 42668, ParaConnFactory(gs))
 	reactor.run()
