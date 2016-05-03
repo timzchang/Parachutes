@@ -160,7 +160,7 @@ class GameSpace:
 						elif self.mode == 3:
 							if self.troops[3] > 0:
 								self.troops[3] -= 1
-								self.trans_info.append(((pygame.mouse.get_pos()[0],10),5,"red_",2,True,0,"left"))
+								self.trans_info.append(((pygame.mouse.get_pos()[0],10),3,"red_",2,True,0,"left"))
 						elif self.mode == 4:
 							if self.troops[4] > 0:
 								self.troops[4] -= 1
