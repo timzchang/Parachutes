@@ -260,7 +260,6 @@ class GameSpace:
 		# until it gets the new information about the bullets and parachuters. Only activates 
 		# when a game is going on
 		if self.conn_status == 1:
-			self.turret.tick()
 			self.gun.tick()
 			for parachuter in self.parachuters:
 				parachuter.tick()
