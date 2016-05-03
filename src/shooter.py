@@ -1,4 +1,16 @@
-# Name: Christopher Syers, Tim Chang
+'''
+Name: Christopher Syers, Tim Chang
+Date: May 2, 2016
+CSE30332 Programming Paradigms Final Project
+
+shooter.py
+
+Waits for a connection from player two (dropper.py) and then 
+start a game of parachutes. This player in this file will 
+attempts to shoot down the cyborgs that are dropped by the 
+other player. The game ends when the dropper is out of cyborgs 
+to drop or the shooter runs out of lives, whichever comes first.
+'''
 
 import math
 import os

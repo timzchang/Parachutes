@@ -1,4 +1,15 @@
-# Name: Christopher Syers, Tim Chang
+'''
+Name: Christopher Syers, Tim Chang
+Date: May 2, 2016
+CSE30332 Programming Paradigms Final Project
+
+dropper.py
+
+Continuously attempts to make connection to host (shooter.py).
+Game starts when a connection is made. Clicks on screen to drop 
+cyborgs down to the ground. Game ends when you run out of troops 
+to drop, or the shooter runs out of lives.
+'''
 
 import math
 import os
