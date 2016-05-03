@@ -8,13 +8,13 @@
 ##How to play
 Both players log into student02.cse.nd.edu and run the python script corresponding to their preferred roles. (Dropper runs dropper.py, Defender runs defender.py). Once both players run their scripts, the game should connect automatically and the game will begin.
 
-More generally, this program can be run on any computer with an open port. To do this, edit the dropper.py file and the defender.py file so that "port" is set to an open TCP port. After this edit, both scripts should be run on the same machine with the following commands from the `src/` directory:
+More generally, this program can be run on any computer with an open port. To do this, firsy clone this repository by using the command `git clone https://github.com/timzchang/Parachutes.git` (HTTP) or `git clone git@github.com:timzchang/Parachutes.git` (SSH). Then, enter the `src/` directory by typing the command `cd Parachutes/src/` from the directory that the repository was cloned into. Then, edit the dropper.py file and the defender.py file so that "port" is set to an open TCP port. This would be done by modifying line 29 in defender.py and line 29 in dropper.py to the open TCP port.  After this edit, both scripts should be run on the same machine with the following commands:
 
-1: Player 1 (defender)
+Player 1 (defender)
 ```bash
 python defender.py
 ```
-2: Player 2 (dropper)
+Player 2 (dropper)
 ```bash
 python dropper.py
 ```
