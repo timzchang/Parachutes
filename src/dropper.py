@@ -166,15 +166,15 @@ class GameSpace:
 								self.troops[4] -= 1
 								self.trans_info.append(((pygame.mouse.get_pos()[0],10),8,"green_",7,False,0,"left"))
 					if event.type == KEYDOWN:
-						if event.key == K_0:	
+						if event.key == K_1:	
 							self.mode = 0
-						elif event.key == K_1:
-							self.mode = 1
 						elif event.key == K_2:
-							self.mode = 2
+							self.mode = 1
 						elif event.key == K_3:
-							self.mode = 3
+							self.mode = 2
 						elif event.key == K_4:
+							self.mode = 3
+						elif event.key == K_5:
 							self.mode = 4
 					
 			# 6) send a tick to every game object
@@ -238,5 +238,5 @@ if __name__ ==  '__main__':
 	gs.init()
 	lc = LoopingCall(gs.game_loop_iterate)
 	lc.start(1/60)
-	reactor.connectTCP('10.18.73.190', 42668, ParaConnFactory(gs))
+	reactor.connectTCP('localhost', 42668, ParaConnFactory(gs))
 	reactor.run()
