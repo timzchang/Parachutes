@@ -26,6 +26,8 @@ from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from defender_obj import *
 
+port = 42668
+
 class ParaConnection(Protocol):
 	"""ParaConnection: connection class of shooter. Connect to 
 	shooter.py, pass along parachuter creation events"""
@@ -247,6 +249,6 @@ if __name__ == '__main__':
 	gs.init()
 	lc = LoopingCall(gs.game_loop_iterate)
 	lc.start(1/60)
-	reactor.listenTCP(42668,ParaConnFactory(gs))
+	reactor.listenTCP(port,ParaConnFactory(gs))
 	reactor.run()
 	lc.stop()
